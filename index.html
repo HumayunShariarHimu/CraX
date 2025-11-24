@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CraX</title>
+<style>
+  :root {
+    --bg:#071029; --card:#0b1220; --accent:#7c3aed; --muted:#94a3b8; --danger:#ef4444;
+  }
+  *{box-sizing:border-box;}
+  body {
+    margin:0;
+    min-height:100vh;
+    background:linear-gradient(180deg,#061028 0%,#071129 100%);
+    color:#e6eef8;
+    font-family:Inter,system-ui,Arial;
+    display:flex;
+    justify-content:center;
+    padding:20px;
+  }
+  .wrap {
+    width:100%;
+    max-width:1000px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 8px 30px rgba(2,6,23,0.6);
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+  }
+  .main, .side { flex:1 1 400px; min-width:280px; }
+  h1{margin:0 0 6px;font-size:22px;}
+  p.lead{margin:0 0 14px;color:var(--muted);font-size:14px;}
+  label{display:block;margin-bottom:6px;color:#cfe6ff;font-size:13px;}
+  textarea, input[type="password"], input[type="text"] {
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.03);
+    background:rgba(255,255,255,0.02);
+    color:inherit;
+    font-size:13px;
+  }
+  textarea{min-height:120px;resize:vertical;}
+  .field{margin-bottom:12px;}
+  .btn{
+    background:linear-gradient(90deg,var(--accent),#5b21b6);
+    border:0;color:white;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600;
+    width:100%;
+    margin-bottom:8px;
+    transition:0.3s;
+  }
+  .btn:hover{opacity:0.9;}
+  .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);}
+  .warning{background:linear-gradient(90deg, rgba(239,68,68,0.06), rgba(255,255,255,0.01));border-left:4px solid rgba(239,68,68,0.9);padding:12px;border-radius:8px;color:#ffdede;font-size:13px;margin-bottom:12px;}
+  .side{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    padding:16px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.02);
+    max-height:600px;
+    overflow:auto;
+  }
+  pre{
+    background:#071123;padding:12px;border-radius:8px;overflow:auto;font-size:13px;border:1px dashed rgba(255,255,255,0.02);
+    max-height:400px; overflow:auto;
+  }
+  .muted{color:var(--muted); font-size:13px;}
+  footer{width:100%; margin-top:12px; font-size:13px; color:var(--muted); text-align:center;}
+  
+  /* MOBILE RESPONSIVE */
+  @media (max-width:768px){
+    .wrap{flex-direction:column;}
+    .main, .side{min-width:100%;}
+    h1{font-size:20px;}
+    p.lead{font-size:13px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="main">
+    <h1>CracX</h1>
+    <p>BlockChain Wallet Decryption System Simulation</p>
+    <p class="lead">Simulates Python script in JS — <strong>decryption is stubbed</strong>. Use actual AES/HMAC offline only.</p>
+
+    <div class="warning">
+      <strong>Note:</strong> As well as Simulation!
+    </div>
+
+    <div class="field">
+      <label for="encArea">Encrypted Wallet (JSON/Base64)</label>
+      <textarea id="encArea" placeholder="Paste encrypted wallet"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="pwdInput">Password</label>
+      <input id="pwdInput" type="password" placeholder="Enter password">
+    </div>
+
+    <button class="btn" id="runBtn">Run (simulate)</button>
+    <button class="btn secondary" id="clearBtn">Clear</button>
+  </div>
+
+  <div class="side">
+    <h3>Output / Console</h3>
+    <div id="outWrap">
+      <p class="muted">Simulation output will appear here.</p>
+    </div>
+  </div>
+  <footer>
+    <div class="muted">©Humayun Shariar Himu</div>
+  </footer>
+</div>
+
+<script>
+const base58_chars='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function decrypt_stub(enc,pwd){console.warn("decrypt_stub() called — stub only.");return null;}
+function base58_decode(v){let value=0n;for(let c of v){const idx=BigInt(base58_chars.indexOf(c));if(idx<0n)throw new Error("Invalid char "+c);value=value*58n+idx;}let ret="";for(let i=0;i<32;i++){ret=String.fromCharCode(Number(value%256n))+ret;value=value/256n;}return ret;}
+function base58_encode(v){let value=0n;for(let i=0;i<v.length;i++)value=value*256n+BigInt(v.charCodeAt(i));let ret="";while(value>0n){ret=base58_chars[Number(value%58n)]+ret;value=value/58n;}return ret;}
+async function to_sipa(s){const version=128;const decoded=base58_decode(s);const key=String.fromCharCode(version)+decoded;const keyBytes=stringToUint8Array(key);const h1=new Uint8Array(await crypto.subtle.digest('SHA-256',keyBytes));const h2=new Uint8Array(await crypto.subtle.digest('SHA-256',h1));const checksum=h2.slice(0,4);const combined=concatUint8Arrays(keyBytes,checksum);return base58_encode(uint8ArrayToString(combined));}
+function stringToUint8Array(str){const arr=new Uint8Array(str.length);for(let i=0;i<str.length;i++)arr[i]=str.charCodeAt(i);return arr;}
+function uint8ArrayToString(u8){let s="";for(let i=0;i<u8.length;i++)s+=String.fromCharCode(u8[i]);return s;}
+function concatUint8Arrays(a,b){const c=new Uint8Array(a.length+b.length);c.set(a,0);c.set(b,a.length);return c;}
+function escapeHtml(str){return String(str).replace(/[&<>"]/g,function(s){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[s];});}
+
+document.getElementById('runBtn').addEventListener('click',async()=>{
+  const enc=document.getElementById('encArea').value.trim();
+  const pwd=document.getElementById('pwdInput').value;
+  const outWrap=document.getElementById('outWrap');
+  if(!enc){alert("Encrypted wallet is empty");return;}
+  if(!confirm("Decryption is stubbed. Continue?")) return;
+  const clear=decrypt_stub(enc,pwd);
+  if(clear===null){
+    const simulated={wallet_type:"simulated",note:"decrypt() disabled — structure only",input_length:enc.length,password_provided:!!pwd,keys:[{address:"1ExampleAddrDemo111",priv:"<encrypted>",priv_sipa:"<not computed>"}]};
+    outWrap.innerHTML='<pre>'+escapeHtml(JSON.stringify(simulated,null,2))+'</pre>';return;
+  }
+  try{
+    const obj=JSON.parse(clear);
+    for(let key of obj.keys){if(key.priv)key.priv_sipa=await to_sipa(key.priv);else key.priv_sipa="<no priv>";}
+    outWrap.innerHTML='<pre>'+escapeHtml(JSON.stringify(obj,null,2))+'</pre>';
+  }catch(e){outWrap.innerHTML='<pre class="muted">Error: '+escapeHtml(String(e))+'</pre>';}
+});
+
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  document.getElementById('encArea').value="";
+  document.getElementById('pwdInput').value="";
+  document.getElementById('outWrap').innerHTML='<p class="muted">Simulation output will appear here.</p>';
+});
+</script>
+</body>
+</html>
